@@ -1,6 +1,6 @@
 import { Promo } from "./types";
 
-export type HighlightKind = "protein" | "tea-water";
+export type HighlightKind = "protein" | "unsweetened";
 
 // Best-effort keyword match against common Japanese convenience-store product naming.
 // Tune these lists if real product names slip through uncaught.
@@ -33,6 +33,20 @@ const SWEETENED_TEA_KEYWORDS = [
   "微糖",
 ];
 
+// Black (無糖) coffee — wanted alongside tea/water, but only the actually-unsweetened kind;
+// lattes, cafe au lait, and other milk/sugar coffee drinks don't count.
+const BLACK_COFFEE_KEYWORDS = ["ブラック", "無糖コーヒー", "アメリカーノ"];
+const SWEETENED_COFFEE_KEYWORDS = ["カフェラテ", "カフェオレ", "ラテ", "微糖", "加糖"];
+// "ブラックサンダー" is a chocolate snack brand, not coffee — the bare "ブラック" match
+// would otherwise misfire on it the same way "抹茶" misfired on Lotte's ice cream.
+const BLACK_COFFEE_EXCLUDE_KEYWORDS = ["ブラックサンダー"];
+
+// Deliberately excludes zero-calorie/diet soda (e.g. コカ・コーラ ゼロ) — those are
+// artificially sweetened, not the "naturally unsweetened" drinks this highlight is for.
+// NOT "コーラ" itself — "コカ・コーラ" is also the brand behind plenty of actual tea/coffee
+// (綾鷹, ジョージア), and that substring would wrongly exclude all of it.
+const NEVER_HIGHLIGHT_KEYWORDS = ["ゼロ"];
+
 // "茶" also shows up as a plain flavor descriptor on non-beverages (matcha ice cream,
 // hojicha pudding, etc.) — those aren't a tea/water drink at all, so exclude them even
 // though the sweetness rule above wouldn't catch them. "ロッテ 爽" specifically is Lotte's
@@ -49,12 +63,23 @@ const NON_BEVERAGE_KEYWORDS = [
   "パフェ",
 ];
 
-function isTeaOrWater(text: string): boolean {
+function isUnsweetenedTeaOrWater(text: string): boolean {
   if (WATER_KEYWORDS.some((k) => text.includes(k))) return true;
-  if (NON_BEVERAGE_KEYWORDS.some((k) => text.includes(k))) return false;
   if (TEA_BRAND_KEYWORDS.some((k) => text.includes(k))) return true;
   if (!text.includes("茶")) return false;
   return !SWEETENED_TEA_KEYWORDS.some((k) => text.includes(k));
+}
+
+function isBlackCoffee(text: string): boolean {
+  if (BLACK_COFFEE_EXCLUDE_KEYWORDS.some((k) => text.includes(k))) return false;
+  if (!BLACK_COFFEE_KEYWORDS.some((k) => text.includes(k))) return false;
+  return !SWEETENED_COFFEE_KEYWORDS.some((k) => text.includes(k));
+}
+
+function isUnsweetenedDrink(text: string): boolean {
+  if (NEVER_HIGHLIGHT_KEYWORDS.some((k) => text.includes(k))) return false;
+  if (NON_BEVERAGE_KEYWORDS.some((k) => text.includes(k))) return false;
+  return isUnsweetenedTeaOrWater(text) || isBlackCoffee(text);
 }
 
 export function detectHighlight(promo: Promo): HighlightKind | null {
@@ -62,6 +87,6 @@ export function detectHighlight(promo: Promo): HighlightKind | null {
   const lower = text.toLowerCase();
 
   if (PROTEIN_KEYWORDS.some((k) => lower.includes(k.toLowerCase()))) return "protein";
-  if (isTeaOrWater(text)) return "tea-water";
+  if (isUnsweetenedDrink(text)) return "unsweetened";
   return null;
 }

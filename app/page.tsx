@@ -129,7 +129,7 @@ export default function Home() {
             {highlightedPromos.length > 0 && (
               <div className="mb-8">
                 <h2 className="mb-3 text-xs tracking-[0.15em] text-stone-400 dark:text-stone-500">
-                  注目（プロテイン・無糖茶/水）
+                  注目（プロテイン・無糖飲料）
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {highlightedPromos.map((p) => (

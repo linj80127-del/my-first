@@ -5,19 +5,19 @@ import { formatPurchasePeriod } from "@/lib/format";
 
 const HIGHLIGHT_LABEL: Record<string, string> = {
   protein: "プロテイン",
-  "tea-water": "無糖茶・水",
+  unsweetened: "無糖飲料",
 };
 
 // A colored left edge plus a tinted tag — visible at a glance while each category keeps
 // its own color, without falling back to a loud filled badge.
 const HIGHLIGHT_BORDER: Record<string, string> = {
   protein: "border-l-4 border-l-amber-700 dark:border-l-amber-500",
-  "tea-water": "border-l-4 border-l-teal-700 dark:border-l-teal-500",
+  unsweetened: "border-l-4 border-l-teal-700 dark:border-l-teal-500",
 };
 
 const HIGHLIGHT_TAG: Record<string, string> = {
   protein: "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
-  "tea-water": "bg-teal-50 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300",
+  unsweetened: "bg-teal-50 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300",
 };
 
 // A fixed height (not just a minimum) plus line-clamp keeps every card's item boxes the
