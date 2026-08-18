@@ -54,6 +54,16 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
   }
 }
 
+// Every date this app deals with (発券期間 etc.) is a Japan-local calendar date, but the
+// server (e.g. Vercel) runs in UTC — shifting by the fixed +9h JST offset before reading
+// UTC-based date components gives the correct Japan-local date regardless of the server's
+// own timezone (Japan doesn't observe DST, so this offset never changes). Callers must use
+// the getUTC* accessors on the result, not the local ones, or the shift is meaningless.
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+export function nowInJst(): Date {
+  return new Date(Date.now() + JST_OFFSET_MS);
+}
+
 const PRICE_RE = /([0-9０-９,，]+)\s*円/;
 
 export function parsePrice(text: string): string | null {
@@ -81,14 +91,14 @@ export interface DateRange {
 }
 
 function toIsoRange(sm: string, sd: string, em: string, ed: string, matchText: string): DateRange {
-  const now = new Date();
+  const now = nowInJst();
   const startMonth = Number(sm);
   const endMonth = Number(em);
-  let startYear = now.getFullYear();
+  let startYear = now.getUTCFullYear();
   // Heuristic: if the period appears to span a New Year (end month earlier than start month),
   // or the whole period is far in the past relative to now, roll the year forward.
   let endYear = endMonth < startMonth ? startYear + 1 : startYear;
-  if (startMonth < now.getMonth() + 1 - 6) {
+  if (startMonth < now.getUTCMonth() + 1 - 6) {
     startYear += 1;
     endYear = endMonth < startMonth ? startYear + 1 : startYear;
   }

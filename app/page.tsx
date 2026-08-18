@@ -31,15 +31,16 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [load]);
 
-  const promos = (data?.results ?? [])
-    .filter((r) => filter === "all" || r.store === filter)
-    .flatMap((r) => r.promos);
+  const visibleResults = (data?.results ?? []).filter((r) => filter === "all" || r.store === filter);
+  const promos = visibleResults.flatMap((r) => r.promos);
 
   const highlightedPromos = promos.filter((p) => detectHighlight(p) !== null);
   const normalPromos = promos.filter((p) => detectHighlight(p) === null);
 
-  const failedStores = (data?.results ?? []).filter((r) => !r.ok);
-  const emptyStores = (data?.results ?? []).filter((r) => r.ok && r.promos.length === 0);
+  // Scoped to the current store filter — a Lawson-only view shouldn't show a banner about
+  // Seven-Eleven having failed when the user isn't even looking at Seven-Eleven right now.
+  const failedStores = visibleResults.filter((r) => !r.ok);
+  const emptyStores = visibleResults.filter((r) => r.ok && r.promos.length === 0);
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
@@ -155,9 +156,13 @@ export default function Home() {
             )}
           </>
         ) : (
-          !loading && (
+          // Only shown when neither banner above already explains why — avoids saying
+          // "nothing to show" twice for the same reason.
+          !loading &&
+          failedStores.length === 0 &&
+          emptyStores.length === 0 && (
             <p className="text-stone-500 dark:text-stone-400">
-              表示できるキャンペーン情報がありません。上のリンクから各社の公式サイトをご確認ください。
+              表示できるキャンペーン情報がありません。しばらくしてから再度お試しください。
             </p>
           )
         )}
@@ -178,6 +183,7 @@ function FilterTab({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={`-mb-px border-b-2 py-3 text-sm transition-colors ${
         active
           ? "border-stone-900 text-stone-900 dark:border-stone-100 dark:text-stone-100"
