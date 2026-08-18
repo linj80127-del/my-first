@@ -1,4 +1,5 @@
 import { Promo, StoreId, StoreResult } from "../types";
+import { nowInJst } from "./util";
 import * as sevenEleven from "./sevenEleven";
 import * as lawson from "./lawson";
 import * as familyMart from "./familyMart";
@@ -13,9 +14,10 @@ const SCRAPERS = {
 // window during which buying the item actually gets you the free-item voucher). A promo
 // whose purchase window already closed is stale even if its 引換期間 (using an
 // already-issued voucher) is technically still open, and an unparsed purchase window is
-// treated as "still current" rather than hidden.
+// treated as "still current" rather than hidden. Uses Japan-local "today" (see nowInJst)
+// since the server itself may run in UTC.
 function isCurrentlyPurchasable(promo: Promo): boolean {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = nowInJst().toISOString().slice(0, 10);
   if (promo.purchaseStart && promo.purchaseStart > today) return false;
   if (promo.purchaseEnd && promo.purchaseEnd < today) return false;
   return true;
