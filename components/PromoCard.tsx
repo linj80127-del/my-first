@@ -2,6 +2,7 @@ import { Promo } from "@/lib/types";
 import { STORES } from "@/lib/stores";
 import { detectHighlight } from "@/lib/highlight";
 import { formatPurchasePeriod } from "@/lib/format";
+import HighlightIllustration from "./HighlightIllustration";
 
 const HIGHLIGHT_LABEL: Record<string, string> = {
   protein: "プロテイン",
@@ -18,6 +19,13 @@ const HIGHLIGHT_BORDER: Record<string, string> = {
 const HIGHLIGHT_TAG: Record<string, string> = {
   protein: "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
   unsweetened: "bg-teal-50 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300",
+};
+
+// A large, faint watermark of the category's icon in the corner — decoration, not
+// information, so it stays low-contrast enough to never compete with the actual text.
+const HIGHLIGHT_WATERMARK: Record<string, string> = {
+  protein: "text-amber-800/[0.14] dark:text-amber-300/[0.14]",
+  unsweetened: "text-teal-800/[0.14] dark:text-teal-300/[0.14]",
 };
 
 // A fixed height (not just a minimum) plus line-clamp keeps every card's item boxes the
@@ -46,11 +54,23 @@ export default function PromoCard({ promo }: { promo: Promo }) {
 
   return (
     <div
-      className={`border border-stone-200 bg-white transition-colors hover:border-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-600 ${
+      className={`relative overflow-hidden border border-stone-200 bg-white transition-colors hover:border-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-600 ${
         highlight ? HIGHLIGHT_BORDER[highlight] : ""
       }`}
     >
-      <a href={promo.sourceUrl} target="_blank" rel="noopener noreferrer" className="block p-5">
+      {highlight && (
+        <HighlightIllustration
+          kind={highlight}
+          className={`pointer-events-none absolute -bottom-5 -right-5 h-32 w-32 ${HIGHLIGHT_WATERMARK[highlight]}`}
+        />
+      )}
+
+      <a
+        href={promo.sourceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative block p-5"
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-1.5 text-xs tracking-wide text-stone-500 dark:text-stone-400">
             <span className={`h-1.5 w-1.5 rounded-full ${meta.color}`} aria-hidden />
@@ -77,7 +97,7 @@ export default function PromoCard({ promo }: { promo: Promo }) {
         </div>
       </a>
 
-      <div className="flex items-center justify-between gap-3 border-t border-stone-100 px-5 py-3 text-sm dark:border-stone-800">
+      <div className="relative flex items-center justify-between gap-3 border-t border-stone-100 px-5 py-3 text-sm dark:border-stone-800">
         <dl className="flex gap-3">
           <dt className="w-16 shrink-0 text-stone-400">発券期間</dt>
           <dd className="text-stone-600 dark:text-stone-300">{formatPurchasePeriod(promo)}</dd>
