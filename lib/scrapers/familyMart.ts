@@ -26,6 +26,9 @@ async function scrapeOfficial(url: string): Promise<Promo[]> {
     if (!buyItem) return;
     if (looksGarbled(buyItem) || looksGarbled(getItem)) return;
 
+    const buySrc = card.find(".side-buy .item-img img").attr("src");
+    const getSrc = card.find(".side-get .item-img img").attr("src");
+
     promos.push({
       id: `family-mart-${i}-${buyItem}`.slice(0, 120),
       store: "family-mart",
@@ -33,6 +36,8 @@ async function scrapeOfficial(url: string): Promise<Promo[]> {
       getItem,
       buyPrice: null, // not stated on the official page
       getPrice: null,
+      buyImageUrl: buySrc ? new URL(buySrc, url).toString() : null,
+      getImageUrl: getSrc ? new URL(getSrc, url).toString() : null,
       periodText,
       purchaseStart,
       purchaseEnd,

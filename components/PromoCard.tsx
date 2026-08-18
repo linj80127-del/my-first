@@ -30,11 +30,23 @@ const HIGHLIGHT_WATERMARK: Record<string, string> = {
 
 // A fixed height (not just a minimum) plus line-clamp keeps every card's item boxes the
 // same size across the whole grid, regardless of how long a given product name is —
-// overflowing names truncate with an ellipsis instead of growing the box.
-function ItemBox({ name }: { name: string }) {
+// overflowing names truncate with an ellipsis instead of growing the box. The product
+// photo (when the source has one) sits as a cover background behind the name, with a
+// scrim so the text stays legible over whatever the photo looks like; a missing/failed
+// image just quietly shows the plain box underneath (no broken-image icon, since this
+// uses a CSS background rather than an <img> tag).
+function ItemBox({ name, imageUrl }: { name: string; imageUrl: string | null }) {
   return (
-    <div className="flex h-16 flex-1 items-center overflow-hidden border border-stone-200 p-2.5 dark:border-stone-700">
-      <p className="line-clamp-3 text-xs leading-snug text-stone-800 dark:text-stone-100">
+    <div
+      className={`relative flex h-28 flex-1 overflow-hidden border border-stone-200 bg-stone-50 bg-cover bg-center dark:border-stone-700 dark:bg-stone-800 ${
+        imageUrl ? "items-end" : "items-center"
+      }`}
+      style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
+    >
+      {imageUrl && (
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/75 via-40% to-transparent dark:from-stone-900 dark:via-stone-900/80" />
+      )}
+      <p className="relative line-clamp-3 p-2.5 text-xs leading-snug text-stone-800 dark:text-stone-100">
         {name}
       </p>
     </div>
@@ -86,14 +98,14 @@ export default function PromoCard({ promo }: { promo: Promo }) {
         </div>
 
         <div className="mt-4 flex items-stretch gap-2">
-          <ItemBox name={promo.buyItem} />
+          <ItemBox name={promo.buyItem} imageUrl={promo.buyImageUrl} />
           <div
             className="flex w-5 shrink-0 items-center justify-center text-stone-400"
             aria-hidden
           >
             →
           </div>
-          <ItemBox name={promo.getItem} />
+          <ItemBox name={promo.getItem} imageUrl={promo.getImageUrl} />
         </div>
       </a>
 

@@ -101,6 +101,8 @@ async function scrapeDetailPage(url: string): Promise<Promo | null> {
     getItem: get.name,
     buyPrice: buy.price,
     getPrice: get.price,
+    buyImageUrl: null, // detail pages are a plain text table — no per-item photos
+    getImageUrl: null,
     periodText,
     purchaseStart,
     purchaseEnd,

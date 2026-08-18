@@ -14,6 +14,8 @@ export interface Promo {
   getItem: string;
   buyPrice: string | null; // price of the item you buy, when the source states it
   getPrice: string | null; // price of the item you get free, when the source states it
+  buyImageUrl: string | null; // product photo for the buy item, when the source has one
+  getImageUrl: string | null; // product photo for the get item, when the source has one
   periodText: string | null; // human-readable full description (both periods, if both are known)
   purchaseStart: string | null; // ISO date — 発券/購入期間の開始（対象商品を買うと無料券がもらえる期間）
   purchaseEnd: string | null; // ISO date — 発券/購入期間の終了
