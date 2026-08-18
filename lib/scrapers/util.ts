@@ -46,9 +46,17 @@ export function parsePrice(text: string): string | null {
   return `${toHalfWidth(m[1])}円`;
 }
 
-// Matches things like "7月7日(火)〜7月13日(月)" or "7/7〜7/13" or "7月7日～7月13日"
-const PERIOD_RE =
-  /(\d{1,2})\s*[月\/]\s*(\d{1,2})\s*日?(?:\([^)]+\))?\s*[〜~～\-–]\s*(\d{1,2})\s*[月\/]\s*(\d{1,2})\s*日?(?:\([^)]+\))?/g;
+// Matches things like "7月7日(火)〜7月13日(月)", "7/7〜7/13", "7月7日～7月13日", the
+// official sites' full-width-parenthesis form "8月18日（火）～8月24日（月）", and the
+// bare-weekday-plus-time form FamilyMart uses for its redeem period, "8/25火AM7:00〜8/31月".
+const WEEKDAY = "(?:[(（]\\s*[月火水木金土日]\\s*[)）]|[月火水木金土日])?";
+const TIME_SUFFIX = "(?:\\s*[AP]M\\d{1,2}:\\d{2})?";
+const PERIOD_RE = new RegExp(
+  `(\\d{1,2})\\s*[月/]\\s*(\\d{1,2})\\s*日?\\s*${WEEKDAY}${TIME_SUFFIX}` +
+    `\\s*[〜~～\\-–]\\s*` +
+    `(\\d{1,2})\\s*[月/]\\s*(\\d{1,2})\\s*日?\\s*${WEEKDAY}${TIME_SUFFIX}`,
+  "g"
+);
 
 export interface DateRange {
   text: string;

@@ -11,7 +11,9 @@ export const STORES: Record<StoreId, StoreMeta> = {
     id: "lawson",
     name: "ローソン",
     color: "bg-blue-600",
-    sourceUrl: "https://www.lawson.co.jp/campaign/",
+    // Was "/campaign/" — verified (2026-08-18) that page is a generic gacha/anime-tie-in
+    // index with no purchase info; the "buy X, get Y free" listings live under this path.
+    sourceUrl: "https://www.lawson.co.jp/recommend/sale/",
   },
   "family-mart": {
     id: "family-mart",
