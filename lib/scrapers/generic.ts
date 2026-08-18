@@ -48,7 +48,7 @@ function buildPromo(
 ): Promo | null {
   if (text.length < 4) return null;
   const price = parsePrice(text);
-  const { periodText, periodStart, periodEnd } = parsePeriod(text);
+  const { periodText, purchaseStart, purchaseEnd, redeemStart, redeemEnd } = parsePeriod(text);
   // Skip obvious noise (nav/footer links, unrelated paragraphs) with neither a price nor a date range.
   if (!price && !periodText) return null;
 
@@ -67,8 +67,10 @@ function buildPromo(
     getItem,
     price,
     periodText,
-    periodStart,
-    periodEnd,
+    purchaseStart,
+    purchaseEnd,
+    redeemStart,
+    redeemEnd,
     sourceUrl: url,
   };
 }

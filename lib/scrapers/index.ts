@@ -10,11 +10,22 @@ const SCRAPERS = {
   "family-mart": familyMart.fetchPromos,
 } as const;
 
-// Seed entries are a manually researched baseline (see lib/seedData.ts), not the live
-// source — an expired one would otherwise linger on screen looking current.
-function activeSeedPromosFor(store: StoreId): Promo[] {
+// Only show promos you can still act on today — i.e. still inside the 発券/購入期間 (the
+// window during which buying the item actually gets you the free-item voucher). A promo
+// whose purchase window already closed is stale even if its 引換期間 (using an
+// already-issued voucher) is technically still open, and an unparsed purchase window is
+// treated as "still current" rather than hidden.
+function isCurrentlyPurchasable(promo: Promo): boolean {
   const today = new Date().toISOString().slice(0, 10);
-  return SEED_PROMOS.filter((p) => p.store === store && (!p.periodEnd || p.periodEnd >= today));
+  if (promo.purchaseStart && promo.purchaseStart > today) return false;
+  if (promo.purchaseEnd && promo.purchaseEnd < today) return false;
+  return true;
+}
+
+// Seed entries are a manually researched baseline (see lib/seedData.ts), not the live
+// source.
+function seedPromosFor(store: StoreId): Promo[] {
+  return SEED_PROMOS.filter((p) => p.store === store);
 }
 
 function dedupeByProduct(promos: Promo[]): Promo[] {
@@ -35,9 +46,9 @@ export async function fetchAllStores(): Promise<StoreResult[]> {
   return Promise.all(
     entries.map(async ([store, fetchFn]) => {
       const fetchedAt = new Date().toISOString();
-      const seedPromos = activeSeedPromosFor(store);
+      const seedPromos = seedPromosFor(store).filter(isCurrentlyPurchasable);
       try {
-        const livePromos = await fetchFn();
+        const livePromos = (await fetchFn()).filter(isCurrentlyPurchasable);
         return {
           store,
           ok: true,
