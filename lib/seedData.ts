@@ -4,8 +4,14 @@ import { Promo } from "./types";
 // "情報源について" section) as a baseline, shown alongside whatever the live scraper finds.
 // The live scraper's own selectors are best-effort guesses at page structures we couldn't
 // verify directly, so this exists as insurance against a sparse or failed scrape rather
-// than as the primary source. Entries whose periodEnd has passed are filtered out
-// automatically — refresh this list periodically (ask Claude to re-research it).
+// than as the primary source.
+//
+// Only entries whose purchaseStart/purchaseEnd currently contains today are shown (see
+// lib/scrapers/index.ts's isCurrentlyPurchasable) — a promo whose purchase window has
+// already closed is stale even if its later redeemStart/redeemEnd window is still open.
+// Keep past entries here (rather than deleting them) so the app doesn't need a manual
+// prune every week; just add this week's new ones. Refresh periodically — ask Claude to
+// re-research it once these numbers look stale.
 export const SEED_PROMOS: Promo[] = [
   {
     id: "seed-seven-eleven-georgia",
@@ -13,9 +19,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "ジョージア アシャッチュ ピーチ／マンゴー 410ml",
     getItem: "ジョージア アシャッチュ ピーチ／マンゴー 410ml",
     price: null,
-    periodText: "購入期間 8/11(火)〜8/17(月)・引換期間 8/18(火)〜8/31(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-31",
+    periodText: "購入期間 8/11(火)〜8/17(月) / 引換期間 8/18(火)〜8/31(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-31",
     sourceUrl: "https://www.sej.co.jp/cmp/plaichi.html",
   },
   {
@@ -24,9 +32,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "ソルマック5 50ml／チオビタ・ドリンク 100ml",
     getItem: "チオビタ・ドリンク 100ml",
     price: null,
-    periodText: "購入期間 8/13(木)〜8/19(水)・引換期間 8/20(木)〜9/2(水)",
-    periodStart: "2026-08-13",
-    periodEnd: "2026-09-02",
+    periodText: "購入期間 8/13(木)〜8/19(水) / 引換期間 8/20(木)〜9/2(水)",
+    purchaseStart: "2026-08-13",
+    purchaseEnd: "2026-08-19",
+    redeemStart: "2026-08-20",
+    redeemEnd: "2026-09-02",
     sourceUrl: "https://www.sej.co.jp/cmp/plaichi.html",
   },
   {
@@ -35,9 +45,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "明治 ブルガリア フローズンヨーグルトデザート 他",
     getItem: "明治 ブルガリア フローズンヨーグルトデザート 他",
     price: null,
-    periodText: "購入期間 8/13(木)〜8/19(水)・引換期間 8/20(木)〜9/2(水)",
-    periodStart: "2026-08-13",
-    periodEnd: "2026-09-02",
+    periodText: "購入期間 8/13(木)〜8/19(水) / 引換期間 8/20(木)〜9/2(水)",
+    purchaseStart: "2026-08-13",
+    purchaseEnd: "2026-08-19",
+    redeemStart: "2026-08-20",
+    redeemEnd: "2026-09-02",
     sourceUrl: "https://www.sej.co.jp/cmp/plaichi.html",
   },
   {
@@ -46,9 +58,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "アサヒ おいしい水天然水 グリーンコーラ 500ml／三ツ矢 ウルトラストロングレモン 600ml",
     getItem: "三ツ矢 とくのうまい りんごスカッシュ 500ml",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 〜8/31(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-31",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 〜8/31(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-31",
     sourceUrl: "https://www.lawson.co.jp/campaign/",
   },
   {
@@ -57,9 +71,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "アサヒ モンスターエナジー 355ml／500ml",
     getItem: "レインストーム トロピカル 250ml",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 〜8/24(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-24",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 〜8/24(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-24",
     sourceUrl: "https://www.lawson.co.jp/campaign/",
   },
   {
@@ -68,9 +84,24 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "ローソン もっちり生パスタ（芳醇ボロネーゼ／濃厚カルボナーラ／海老トマトクリーム）",
     getItem: "明治 ブルガリア フローズンヨーグルトデザート 85ml",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 〜8/24(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-24",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 〜8/24(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-24",
+    sourceUrl: "https://www.lawson.co.jp/campaign/",
+  },
+  {
+    id: "seed-lawson-machikado-kinki",
+    store: "lawson",
+    buyItem: "まちかど厨房 弁当各種（近畿エリア限定）",
+    getItem: "アイリスのお茶 綠 500ml",
+    price: null,
+    periodText: "8/18(火)〜（近畿エリア限定）",
+    purchaseStart: "2026-08-18",
+    purchaseEnd: "2026-08-18",
+    redeemStart: null,
+    redeemEnd: null,
     sourceUrl: "https://www.lawson.co.jp/campaign/",
   },
   {
@@ -79,9 +110,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "サントリー NOPE ギルティ炭酸 600ml",
     getItem: "ファミマル ペプシコーラ 600ml",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 8/18(火)7:00〜8/24(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-24",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 8/18(火)7:00〜8/24(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-24",
     sourceUrl: "https://www.family.co.jp/campaign.html",
   },
   {
@@ -90,9 +123,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "アサヒ ウィルキンソン タンサン マスカットスカッシュ 490ml",
     getItem: "アサヒ ウィルキンソン タンサン マスカットスカッシュ 490ml",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 8/18(火)7:00〜8/24(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-24",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 8/18(火)7:00〜8/24(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-24",
     sourceUrl: "https://www.family.co.jp/campaign.html",
   },
   {
@@ -101,9 +136,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "コカ・コーラ 綾鷹／綾鷹 濃い緑茶 650ml",
     getItem: "コカ・コーラ 綾鷹／綾鷹 濃い緑茶 650ml",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 8/18(火)7:00〜8/24(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-24",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 8/18(火)7:00〜8/24(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-24",
     sourceUrl: "https://www.family.co.jp/campaign.html",
   },
   {
@@ -112,9 +149,11 @@ export const SEED_PROMOS: Promo[] = [
     buyItem: "カルビー じゃがりこ（たらこバター／細いやつサラダ）",
     getItem: "カルビー じゃがりこ（じゃがバター／チーズ）",
     price: null,
-    periodText: "発券 8/11(火)〜8/17(月)・引換 8/18(火)7:00〜8/24(月)",
-    periodStart: "2026-08-11",
-    periodEnd: "2026-08-24",
+    periodText: "発券期間 8/11(火)〜8/17(月) / 引換期間 8/18(火)7:00〜8/24(月)",
+    purchaseStart: "2026-08-11",
+    purchaseEnd: "2026-08-17",
+    redeemStart: "2026-08-18",
+    redeemEnd: "2026-08-24",
     sourceUrl: "https://www.family.co.jp/campaign.html",
   },
 ];

@@ -48,17 +48,15 @@ export function parsePrice(text: string): string | null {
 
 // Matches things like "7月7日(火)〜7月13日(月)" or "7/7〜7/13" or "7月7日～7月13日"
 const PERIOD_RE =
-  /(\d{1,2})\s*[月\/]\s*(\d{1,2})\s*日?(?:\([^)]+\))?\s*[〜~～\-–]\s*(\d{1,2})\s*[月\/]\s*(\d{1,2})\s*日?(?:\([^)]+\))?/;
+  /(\d{1,2})\s*[月\/]\s*(\d{1,2})\s*日?(?:\([^)]+\))?\s*[〜~～\-–]\s*(\d{1,2})\s*[月\/]\s*(\d{1,2})\s*日?(?:\([^)]+\))?/g;
 
-export function parsePeriod(text: string): {
-  periodText: string | null;
-  periodStart: string | null;
-  periodEnd: string | null;
-} {
-  const m = text.match(PERIOD_RE);
-  if (!m) return { periodText: null, periodStart: null, periodEnd: null };
+export interface DateRange {
+  text: string;
+  start: string; // ISO date
+  end: string; // ISO date
+}
 
-  const [, sm, sd, em, ed] = m;
+function toIsoRange(sm: string, sd: string, em: string, ed: string, matchText: string): DateRange {
   const now = new Date();
   const startMonth = Number(sm);
   const endMonth = Number(em);
@@ -72,10 +70,47 @@ export function parsePeriod(text: string): {
   }
 
   const pad = (n: number) => String(n).padStart(2, "0");
-  const periodStart = `${startYear}-${pad(startMonth)}-${pad(Number(sd))}`;
-  const periodEnd = `${endYear}-${pad(endMonth)}-${pad(Number(ed))}`;
+  return {
+    text: matchText,
+    start: `${startYear}-${pad(startMonth)}-${pad(Number(sd))}`,
+    end: `${endYear}-${pad(endMonth)}-${pad(Number(ed))}`,
+  };
+}
 
-  return { periodText: m[0], periodStart, periodEnd };
+// Finds every date-range in the text (a page commonly states both a 購入/発券期間 and a
+// separate, later 引換期間). Order in the source text is assumed to be purchase period
+// first, redeem period second — true for every source this app currently scrapes.
+export function parseAllPeriods(text: string): DateRange[] {
+  const ranges: DateRange[] = [];
+  for (const m of text.matchAll(PERIOD_RE)) {
+    const [full, sm, sd, em, ed] = m;
+    ranges.push(toIsoRange(sm, sd, em, ed, full));
+  }
+  return ranges;
+}
+
+export function parsePeriod(text: string): {
+  periodText: string | null;
+  purchaseStart: string | null;
+  purchaseEnd: string | null;
+  redeemStart: string | null;
+  redeemEnd: string | null;
+} {
+  const ranges = parseAllPeriods(text);
+  if (ranges.length === 0) {
+    return { periodText: null, purchaseStart: null, purchaseEnd: null, redeemStart: null, redeemEnd: null };
+  }
+
+  const [purchase, redeem] = ranges;
+  const periodText = redeem ? `${purchase.text} / ${redeem.text}` : purchase.text;
+
+  return {
+    periodText,
+    purchaseStart: purchase.start,
+    purchaseEnd: purchase.end,
+    redeemStart: redeem ? redeem.start : null,
+    redeemEnd: redeem ? redeem.end : null,
+  };
 }
 
 function toHalfWidth(s: string): string {

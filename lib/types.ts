@@ -13,9 +13,11 @@ export interface Promo {
   buyItem: string;
   getItem: string;
   price: string | null;
-  periodText: string | null;
-  periodStart: string | null; // ISO date, if parseable
-  periodEnd: string | null; // ISO date, if parseable
+  periodText: string | null; // human-readable full description (both periods, if both are known)
+  purchaseStart: string | null; // ISO date — 発券/購入期間の開始（対象商品を買うと無料券がもらえる期間）
+  purchaseEnd: string | null; // ISO date — 発券/購入期間の終了
+  redeemStart: string | null; // ISO date — 引換期間の開始（もらった無料券を使える期間）。未確認なら null
+  redeemEnd: string | null; // ISO date — 引換期間の終了。未確認なら null
   sourceUrl: string;
 }
 

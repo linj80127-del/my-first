@@ -38,7 +38,8 @@ export default function Home() {
   const highlightedPromos = promos.filter((p) => detectHighlight(p) !== null);
   const normalPromos = promos.filter((p) => detectHighlight(p) === null);
 
-  const failedStores = (data?.results ?? []).filter((r) => !r.ok || r.promos.length === 0);
+  const failedStores = (data?.results ?? []).filter((r) => !r.ok);
+  const emptyStores = (data?.results ?? []).filter((r) => r.ok && r.promos.length === 0);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -87,7 +88,7 @@ export default function Home() {
           <p className="text-zinc-500 dark:text-zinc-400">読み込み中…</p>
         )}
 
-        {failedStores.length > 0 && (
+        {(failedStores.length > 0 || emptyStores.length > 0) && (
           <div className="mb-4 space-y-2">
             {failedStores.map((r) => (
               <div
@@ -96,6 +97,23 @@ export default function Home() {
               >
                 {STORES[r.store].name}
                 の最新情報を自動取得できませんでした。
+                <a
+                  href={STORES[r.store].sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 underline"
+                >
+                  公式サイトで確認する
+                </a>
+              </div>
+            ))}
+            {emptyStores.map((r) => (
+              <div
+                key={r.store}
+                className="rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400"
+              >
+                {STORES[r.store].name}
+                は現在、発券期間中の対象商品がありません（切り替わり中の可能性があります）。
                 <a
                   href={STORES[r.store].sourceUrl}
                   target="_blank"
