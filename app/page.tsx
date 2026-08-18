@@ -42,38 +42,40 @@ export default function Home() {
   const emptyStores = (data?.results ?? []).filter((r) => r.ok && r.promos.length === 0);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto max-w-4xl px-4 py-5">
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-            コンビニ プライチ・お得情報
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            セブン-イレブン・ローソン・ファミリーマートの「1個買うと1個もらえる」等のキャンペーンをまとめて表示します。
-          </p>
-          <div className="mt-3 flex items-center gap-3 text-sm">
-            <button
-              onClick={() => load(true)}
-              disabled={loading}
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
-            >
-              {loading ? "更新中…" : "今すぐ更新"}
-            </button>
-            {data && (
-              <span className="text-zinc-400">
-                最終更新: {new Date(data.fetchedAt).toLocaleString("ja-JP")}
-                {data.stale && "（取得失敗のため前回データを表示中）"}
-              </span>
-            )}
-          </div>
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
+      <header className="mx-auto max-w-4xl px-5 pb-6 pt-10 sm:px-6">
+        <p className="text-xs tracking-[0.2em] text-stone-400 dark:text-stone-500">
+          SEVEN-ELEVEN / LAWSON / FAMILYMART
+        </p>
+        <h1 className="mt-2 text-2xl font-medium tracking-tight text-stone-900 dark:text-stone-50">
+          コンビニ プライチ・お得情報
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-stone-500 dark:text-stone-400">
+          セブン-イレブン・ローソン・ファミリーマートの「1個買うと1個もらえる」等のキャンペーンをまとめて表示します。
+        </p>
+
+        <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
+          <button
+            onClick={() => load(true)}
+            disabled={loading}
+            className="border border-stone-300 px-4 py-1.5 text-stone-700 transition-colors hover:border-stone-900 hover:text-stone-900 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:border-stone-100 dark:hover:text-stone-100"
+          >
+            {loading ? "更新中…" : "今すぐ更新"}
+          </button>
+          {data && (
+            <span className="text-stone-400 dark:text-stone-500">
+              最終更新: {new Date(data.fetchedAt).toLocaleString("ja-JP")}
+              {data.stale && "（取得失敗のため前回データを表示中）"}
+            </span>
+          )}
         </div>
       </header>
 
-      <nav className="mx-auto max-w-4xl px-4 pt-4">
-        <div className="flex flex-wrap gap-2">
-          <FilterChip label="すべて" active={filter === "all"} onClick={() => setFilter("all")} />
+      <nav className="mx-auto max-w-4xl border-b border-stone-200 px-5 sm:px-6 dark:border-stone-800">
+        <div className="flex flex-wrap gap-6">
+          <FilterTab label="すべて" active={filter === "all"} onClick={() => setFilter("all")} />
           {STORE_LIST.map((s) => (
-            <FilterChip
+            <FilterTab
               key={s.id}
               label={s.name}
               active={filter === s.id}
@@ -83,17 +85,15 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-4xl px-4 py-6">
-        {loading && !data && (
-          <p className="text-zinc-500 dark:text-zinc-400">読み込み中…</p>
-        )}
+      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6">
+        {loading && !data && <p className="text-stone-500 dark:text-stone-400">読み込み中…</p>}
 
         {(failedStores.length > 0 || emptyStores.length > 0) && (
-          <div className="mb-4 space-y-2">
+          <div className="mb-6 space-y-2">
             {failedStores.map((r) => (
               <div
                 key={r.store}
-                className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+                className="border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
               >
                 {STORES[r.store].name}
                 の最新情報を自動取得できませんでした。
@@ -101,7 +101,7 @@ export default function Home() {
                   href={STORES[r.store].sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-1 underline"
+                  className="ml-1 underline underline-offset-2"
                 >
                   公式サイトで確認する
                 </a>
@@ -110,7 +110,7 @@ export default function Home() {
             {emptyStores.map((r) => (
               <div
                 key={r.store}
-                className="rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400"
+                className="border border-stone-200 bg-stone-100 px-4 py-2.5 text-sm text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-400"
               >
                 {STORES[r.store].name}
                 は現在、発券期間中の対象商品がありません（切り替わり中の可能性があります）。
@@ -118,7 +118,7 @@ export default function Home() {
                   href={STORES[r.store].sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-1 underline"
+                  className="ml-1 underline underline-offset-2"
                 >
                   公式サイトで確認する
                 </a>
@@ -130,8 +130,8 @@ export default function Home() {
         {promos.length > 0 ? (
           <>
             {highlightedPromos.length > 0 && (
-              <div className="mb-6">
-                <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+              <div className="mb-8">
+                <h2 className="mb-3 text-xs tracking-[0.15em] text-stone-400 dark:text-stone-500">
                   注目（プロテイン・無糖茶/水）
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -145,7 +145,7 @@ export default function Home() {
             {normalPromos.length > 0 && (
               <div>
                 {highlightedPromos.length > 0 && (
-                  <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                  <h2 className="mb-3 text-xs tracking-[0.15em] text-stone-400 dark:text-stone-500">
                     その他の対象商品
                   </h2>
                 )}
@@ -159,7 +159,7 @@ export default function Home() {
           </>
         ) : (
           !loading && (
-            <p className="text-zinc-500 dark:text-zinc-400">
+            <p className="text-stone-500 dark:text-stone-400">
               表示できるキャンペーン情報がありません。上のリンクから各社の公式サイトをご確認ください。
             </p>
           )
@@ -169,7 +169,7 @@ export default function Home() {
   );
 }
 
-function FilterChip({
+function FilterTab({
   label,
   active,
   onClick,
@@ -181,10 +181,10 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition ${
+      className={`-mb-px border-b-2 py-3 text-sm transition-colors ${
         active
-          ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
-          : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+          ? "border-stone-900 text-stone-900 dark:border-stone-100 dark:text-stone-100"
+          : "border-transparent text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
       }`}
     >
       {label}
