@@ -65,7 +65,11 @@ function buildPromo(
     store,
     buyItem,
     getItem,
-    price,
+    // This scraper reads one price out of an undifferentiated text blob, so it can't tell
+    // whether it belongs to the buy or get item — attribute it to the buy item, since that's
+    // what's actually being priced/sold; the free item's price is never stated.
+    buyPrice: price,
+    getPrice: null,
     periodText,
     purchaseStart,
     purchaseEnd,

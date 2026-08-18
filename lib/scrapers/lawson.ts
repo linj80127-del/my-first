@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import { Promo } from "../types";
 import { STORES } from "../stores";
-import { cleanText, dedupePromos, fetchHtml, parsePeriod } from "./util";
+import { cleanText, dedupePromos, fetchHtml, parsePeriod, parsePrice } from "./util";
 import { genericHeadingBlockScrape, looksGarbled } from "./generic";
 
 // The "buy X, get Y free" listings each live on their own detail page linked from
@@ -10,17 +10,24 @@ import { genericHeadingBlockScrape, looksGarbled } from "./generic";
 // last week's campaigns, so this comfortably covers a normal week without unbounded fan-out.
 const MAX_DETAIL_PAGES = 12;
 
+interface NamedItem {
+  name: string;
+  price: string | null;
+}
+
 // Multi-variant campaigns (e.g. "any of these 2 flavors") list every variant individually;
 // showing just the first plus "他" keeps the card readable, matching the convention already
-// used in lib/seedData.ts.
-function summarizeNames(names: string[]): string {
-  if (names.length <= 1) return names[0] ?? "";
-  return `${names[0]} 他`;
+// used in lib/seedData.ts. Its price is shown alongside — the variants aren't always
+// same-priced, but this is the best single price a summarized name can honestly carry.
+function summarizeItems(items: NamedItem[]): NamedItem {
+  if (items.length === 0) return { name: "", price: null };
+  if (items.length === 1) return items[0];
+  return { name: `${items[0].name} 他`, price: items[0].price };
 }
 
 interface DetailInfo {
-  buyNames: string[];
-  getNames: string[];
+  buyItems: NamedItem[];
+  getItems: NamedItem[];
   purchaseStart: string | null;
   purchaseEnd: string | null;
   redeemStart: string | null;
@@ -29,12 +36,13 @@ interface DetailInfo {
 }
 
 // Each detail page is a single `.saleInfo table` whose rows are either a "●..." header
-// (naming a 発券期間/引換期間 date range) or a plain product row that belongs to whichever
-// header came before it — verified against the live page structure (2026-08-18).
+// (naming a 発券期間/引換期間 date range) or a plain product row — with its own `.price`
+// cell — that belongs to whichever header came before it, verified against the live page
+// structure (2026-08-18).
 function parseDetailTable($: cheerio.CheerioAPI): DetailInfo {
   const rows = $(".saleInfo table tr").toArray();
-  const buyNames: string[] = [];
-  const getNames: string[] = [];
+  const buyItems: NamedItem[] = [];
+  const getItems: NamedItem[] = [];
   let section: "purchase" | "redeem" | null = null;
   let purchaseStart: string | null = null;
   let purchaseEnd: string | null = null;
@@ -44,7 +52,8 @@ function parseDetailTable($: cheerio.CheerioAPI): DetailInfo {
   let redeemText: string | null = null;
 
   for (const row of rows) {
-    const nameText = cleanText($(row).find(".name").text());
+    const $row = $(row);
+    const nameText = cleanText($row.find(".name").text());
     if (!nameText) continue;
 
     if (nameText.startsWith("●")) {
@@ -64,32 +73,34 @@ function parseDetailTable($: cheerio.CheerioAPI): DetailInfo {
       continue;
     }
 
-    (section === "redeem" ? getNames : buyNames).push(nameText);
+    const price = parsePrice(cleanText($row.find(".price").text()));
+    (section === "redeem" ? getItems : buyItems).push({ name: nameText, price });
   }
 
   const periodText =
     purchaseText && redeemText ? `${purchaseText} / ${redeemText}` : (purchaseText ?? redeemText);
 
-  return { buyNames, getNames, purchaseStart, purchaseEnd, redeemStart, redeemEnd, periodText };
+  return { buyItems, getItems, purchaseStart, purchaseEnd, redeemStart, redeemEnd, periodText };
 }
 
 async function scrapeDetailPage(url: string): Promise<Promo | null> {
   const html = await fetchHtml(url);
   const $ = cheerio.load(html);
-  const { buyNames, getNames, purchaseStart, purchaseEnd, redeemStart, redeemEnd, periodText } =
+  const { buyItems, getItems, purchaseStart, purchaseEnd, redeemStart, redeemEnd, periodText } =
     parseDetailTable($);
-  if (!purchaseStart || buyNames.length === 0) return null;
+  if (!purchaseStart || buyItems.length === 0) return null;
 
-  const buyItem = summarizeNames(buyNames);
-  const getItem = getNames.length > 0 ? summarizeNames(getNames) : buyItem;
-  if (looksGarbled(buyItem) || looksGarbled(getItem)) return null;
+  const buy = summarizeItems(buyItems);
+  const get = getItems.length > 0 ? summarizeItems(getItems) : buy;
+  if (looksGarbled(buy.name) || looksGarbled(get.name)) return null;
 
   return {
     id: `lawson-${url}`.slice(0, 120),
     store: "lawson",
-    buyItem,
-    getItem,
-    price: null,
+    buyItem: buy.name,
+    getItem: get.name,
+    buyPrice: buy.price,
+    getPrice: get.price,
     periodText,
     purchaseStart,
     purchaseEnd,

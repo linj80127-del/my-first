@@ -20,9 +20,22 @@ const HIGHLIGHT_TAG: Record<string, string> = {
   "tea-water": "bg-teal-50 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300",
 };
 
+// A fixed height (not just a minimum) plus line-clamp keeps every card's item boxes the
+// same size across the whole grid, regardless of how long a given product name is —
+// overflowing names truncate with an ellipsis instead of growing the box.
+function ItemBox({ name, price }: { name: string; price: string | null }) {
+  return (
+    <div className="flex h-28 flex-1 flex-col justify-between overflow-hidden border border-stone-200 p-2.5 dark:border-stone-700">
+      <p className="line-clamp-3 text-xs leading-snug text-stone-800 dark:text-stone-100">
+        {name}
+      </p>
+      <p className="text-xs font-medium text-stone-500 dark:text-stone-400">{price ?? " "}</p>
+    </div>
+  );
+}
+
 export default function PromoCard({ promo }: { promo: Promo }) {
   const meta = STORES[promo.store];
-  const sameItem = promo.buyItem === promo.getItem;
   const highlight = detectHighlight(promo);
 
   return (
@@ -48,21 +61,15 @@ export default function PromoCard({ promo }: { promo: Promo }) {
         )}
       </div>
 
-      <div className="mt-4">
-        <p className="text-base font-medium leading-snug text-stone-900 dark:text-stone-50">
-          {promo.buyItem}
-          <span className="mx-1.5 text-stone-400">→</span>
-          {sameItem ? "もう1つ無料" : promo.getItem}
-        </p>
+      <div className="mt-4 flex items-stretch gap-2">
+        <ItemBox name={promo.buyItem} price={promo.buyPrice} />
+        <div className="flex w-5 shrink-0 items-center justify-center text-stone-400" aria-hidden>
+          →
+        </div>
+        <ItemBox name={promo.getItem} price={promo.getPrice} />
       </div>
 
       <dl className="mt-4 space-y-1 border-t border-stone-100 pt-3 text-sm dark:border-stone-800">
-        {promo.price && (
-          <div className="flex gap-3">
-            <dt className="w-16 shrink-0 text-stone-400">価格</dt>
-            <dd className="text-stone-600 dark:text-stone-300">{promo.price}</dd>
-          </div>
-        )}
         <div className="flex gap-3">
           <dt className="w-16 shrink-0 text-stone-400">発券期間</dt>
           <dd className="text-stone-600 dark:text-stone-300">{formatPurchasePeriod(promo)}</dd>
