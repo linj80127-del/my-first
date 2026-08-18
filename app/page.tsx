@@ -50,9 +50,6 @@ export default function Home() {
         <h1 className="mt-2 text-2xl font-medium tracking-tight text-stone-900 dark:text-stone-50">
           コンビニ プライチ・お得情報
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-stone-500 dark:text-stone-400">
-          セブン-イレブン・ローソン・ファミリーマートの「1個買うと1個もらえる」等のキャンペーンをまとめて表示します。
-        </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
           <button

@@ -60,9 +60,6 @@ export default function PromoCard({ promo }: { promo: Promo }) {
             {promo.getItem}
           </p>
         )}
-        <p className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
-          {sameItem ? "1個買うと1個もらえる" : "対象商品購入でもらえる"}
-        </p>
       </div>
 
       <dl className="mt-4 space-y-1 border-t border-stone-100 pt-3 text-sm dark:border-stone-800">
