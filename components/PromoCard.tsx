@@ -35,16 +35,28 @@ const HIGHLIGHT_WATERMARK: Record<string, string> = {
 // scrim so the text stays legible over whatever the photo looks like; a missing/failed
 // image just quietly shows the plain box underneath (no broken-image icon, since this
 // uses a CSS background rather than an <img> tag).
-function ItemBox({ name, imageUrl }: { name: string; imageUrl: string | null }) {
+//
+// `transparent` drops the box's own white fill for the whole-card-banner case (see
+// PromoCard below) — there, the card itself already shows a photo behind everything,
+// so an opaque per-box fill would just blot it out again inside the box's own footprint.
+function ItemBox({
+  name,
+  imageUrl,
+  transparent = false,
+}: {
+  name: string;
+  imageUrl: string | null;
+  transparent?: boolean;
+}) {
   return (
     <div
-      className={`relative flex h-28 flex-1 overflow-hidden border border-stone-200 bg-stone-50 bg-cover bg-center dark:border-stone-700 dark:bg-stone-800 ${
+      className={`relative flex h-16 flex-1 overflow-hidden border border-stone-200 bg-cover bg-center dark:border-stone-700 ${
         imageUrl ? "items-end" : "items-center"
-      }`}
+      } ${transparent ? "" : "bg-stone-50 dark:bg-stone-800"}`}
       style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
     >
       {imageUrl && (
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/75 via-40% to-transparent dark:from-stone-900 dark:via-stone-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-stone-900 dark:via-stone-900/85" />
       )}
       <p className="relative line-clamp-3 p-2.5 text-xs leading-snug text-stone-800 dark:text-stone-100">
         {name}
@@ -63,13 +75,19 @@ function storeMapsUrl(storeName: string): string {
 export default function PromoCard({ promo }: { promo: Promo }) {
   const meta = STORES[promo.store];
   const highlight = detectHighlight(promo);
+  const bannerUrl = promo.bannerImageUrl;
 
   return (
     <div
-      className={`relative overflow-hidden border border-stone-200 bg-white transition-colors hover:border-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-600 ${
+      className={`relative overflow-hidden border border-stone-200 bg-white bg-cover bg-center transition-colors hover:border-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-600 ${
         highlight ? HIGHLIGHT_BORDER[highlight] : ""
       }`}
+      style={bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : undefined}
     >
+      {bannerUrl && (
+        <div className="absolute inset-0 bg-white/85 dark:bg-stone-900/85" />
+      )}
+
       {highlight && (
         <HighlightIllustration
           kind={highlight}
@@ -98,14 +116,14 @@ export default function PromoCard({ promo }: { promo: Promo }) {
         </div>
 
         <div className="mt-4 flex items-stretch gap-2">
-          <ItemBox name={promo.buyItem} imageUrl={promo.buyImageUrl} />
+          <ItemBox name={promo.buyItem} imageUrl={promo.buyImageUrl} transparent={!!bannerUrl} />
           <div
             className="flex w-5 shrink-0 items-center justify-center text-stone-400"
             aria-hidden
           >
             →
           </div>
-          <ItemBox name={promo.getItem} imageUrl={promo.getImageUrl} />
+          <ItemBox name={promo.getItem} imageUrl={promo.getImageUrl} transparent={!!bannerUrl} />
         </div>
       </a>
 

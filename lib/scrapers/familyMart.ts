@@ -38,6 +38,7 @@ async function scrapeOfficial(url: string): Promise<Promo[]> {
       getPrice: null,
       buyImageUrl: buySrc ? new URL(buySrc, url).toString() : null,
       getImageUrl: getSrc ? new URL(getSrc, url).toString() : null,
+      bannerImageUrl: null, // has distinct per-item photos, not a single combined banner
       periodText,
       purchaseStart,
       purchaseEnd,
