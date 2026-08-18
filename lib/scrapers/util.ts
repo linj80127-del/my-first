@@ -1,4 +1,5 @@
 import iconv from "iconv-lite";
+import jschardet from "jschardet";
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -21,28 +22,17 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
 
     const buffer = Buffer.from(await res.arrayBuffer());
 
-    // Some sites' declared charset (header or <meta>) doesn't match what they actually
-    // send (e.g. migrated to UTF-8 but left an old Shift_JIS meta tag in place), so the
-    // declared value can't be trusted blindly. Decode as UTF-8 first and only fall back
-    // to the declared/sniffed charset if that produced invalid sequences (U+FFFD).
-    const utf8Text = buffer.toString("utf-8");
-    if (!utf8Text.includes("�")) return utf8Text;
-
-    const contentType = res.headers.get("content-type") ?? "";
-    let charset = contentType.match(/charset=([^;]+)/i)?.[1];
-    if (!charset) {
-      // Scan just the head for a <meta charset> declaration, decoded as latin1 so every
-      // byte maps 1:1 to a char code — safe for reading pure-ASCII markup regardless of
-      // the real encoding, without needing to know that encoding yet.
-      const head = buffer.subarray(0, 4096).toString("latin1");
-      charset = head.match(/charset=["']?([\w-]+)/i)?.[1];
+    // A site's declared charset (header or <meta>) frequently doesn't match what it
+    // actually sends (e.g. migrated to UTF-8 but left an old Shift_JIS meta tag in
+    // place), so it can't be trusted. jschardet inspects the actual byte statistics
+    // instead of any label, which is what correctly distinguishes real Shift_JIS
+    // content from UTF-8 content that merely LOOKS like valid UTF-8 by chance.
+    const { encoding, confidence } = jschardet.detect(buffer);
+    const detected = (encoding ?? "utf-8").toLowerCase();
+    if (confidence > 0.5 && detected !== "utf-8" && detected !== "ascii" && iconv.encodingExists(detected)) {
+      return iconv.decode(buffer, detected);
     }
-    charset = (charset ?? "").trim();
-
-    if (charset && iconv.encodingExists(charset)) {
-      return iconv.decode(buffer, charset);
-    }
-    return utf8Text;
+    return buffer.toString("utf-8");
   } finally {
     clearTimeout(timer);
   }
