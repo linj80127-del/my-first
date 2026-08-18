@@ -7,8 +7,26 @@
 - **プロテイン**が対象商品にある場合は赤枠、**無糖茶・水**が対象商品にある場合は青枠で囲み、画面の一番上（「注目」セクション）に表示
 - 「今すぐ更新」ボタンで手動更新、10分ごとに自動更新
 - 取得に失敗した店舗は、その旨と公式サイトへのリンクを表示（前回成功データがあればそれを表示）
+- PWA対応。スマホで「ホーム画面に追加」するとアプリのようなアイコン・全画面表示で使えます
 
-## 使い方
+## 友達と共有できるURLを作る（デプロイ）
+
+このリポジトリはNext.jsアプリなので、そのままではURLがありません。無料で公開URLを作るには、GitHubアカウントで [Vercel](https://vercel.com) にサインアップし、下のボタンからインポートするのが一番簡単です（数クリックで完了、CLIやサーバー管理は不要）。
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/linj80127-del/my-first&project-name=conveni-plaichi&repository-name=conveni-plaichi)
+
+デプロイが終わると `https://xxxxx.vercel.app` のようなURLが発行されます。そのURLを友達に送れば、友達もブラウザ（またはホーム画面に追加したアイコン）から同じ内容を見られます。ブランチを更新してGitHubにpushすると、Vercel側も自動で再デプロイされます。
+
+### スマホでアプリのように使う
+
+デプロイ後のURLをスマホのブラウザで開き、
+
+- **iPhone (Safari):** 共有ボタン → 「ホーム画面に追加」
+- **Android (Chrome):** メニュー（︙）→ 「ホーム画面に追加」／「アプリをインストール」
+
+を選ぶと、ホーム画面にアイコンが追加され、ブラウザのアドレスバーなしでアプリのように開けます。
+
+## 使い方（ローカル開発）
 
 ```bash
 npm install
@@ -32,6 +50,7 @@ npm run start
 - `lib/scrapers/generic.ts` — 公式サイト向け（カード抽出）とブログ記事向け（見出しブロック抽出）の共通パース処理
 - `lib/stores.ts` — 店舗名・色・参照元URLの設定
 - `lib/highlight.ts` — プロテイン／無糖茶・水のキーワード判定
+- `app/manifest.ts` / `app/icon-192`, `app/icon-512`, `app/apple-icon.tsx` — PWA用マニフェストとアイコン
 
 ## 情報源について
 
