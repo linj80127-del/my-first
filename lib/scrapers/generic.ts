@@ -27,6 +27,18 @@ function guessProductName(rawText: string, price: string | null, periodText: str
   return t.length > 40 ? `${t.slice(0, 40)}…` : t;
 }
 
+// Stray control bytes (outside plain whitespace) are never legitimate in a product name —
+// their presence means something upstream failed to decode cleanly.
+const CONTROL_CHAR_RE = new RegExp("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]");
+
+// Catches text that failed to decode cleanly (replacement chars, stray control bytes) so
+// it never reaches the UI — a missing promo is far less confusing than a garbled one.
+function looksGarbled(text: string): boolean {
+  if (text.includes("�")) return true;
+  if (CONTROL_CHAR_RE.test(text)) return true;
+  return false;
+}
+
 function buildPromo(
   text: string,
   store: StoreId,
@@ -43,6 +55,10 @@ function buildPromo(
   const productName = fallbackName ?? guessProductName(text, price, periodText);
   if (!productName) return null;
   const { buyItem, getItem } = splitBuyGet(text, productName);
+
+  // Defensive guard: never show a promo whose name looks like mojibake (a source
+  // encoding we failed to detect correctly) — an empty result is better than garbage.
+  if (looksGarbled(buyItem) || looksGarbled(getItem)) return null;
 
   return {
     id: `${store}-${idx}-${buyItem}`.slice(0, 120),
