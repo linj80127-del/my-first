@@ -94,6 +94,10 @@ async function scrapeDetailPage(url: string): Promise<Promo | null> {
   const get = getItems.length > 0 ? summarizeItems(getItems) : buy;
   if (looksGarbled(buy.name) || looksGarbled(get.name)) return null;
 
+  // The detail page's table has no per-item photos, but does have one combined campaign
+  // banner image (`<p class="img">`) covering both the buy and get item together.
+  const bannerSrc = $("p.img img").first().attr("src");
+
   return {
     id: `lawson-${url}`.slice(0, 120),
     store: "lawson",
@@ -101,6 +105,9 @@ async function scrapeDetailPage(url: string): Promise<Promo | null> {
     getItem: get.name,
     buyPrice: buy.price,
     getPrice: get.price,
+    buyImageUrl: null, // detail pages are a plain text table — no per-item photos
+    getImageUrl: null,
+    bannerImageUrl: bannerSrc ? new URL(bannerSrc, url).toString() : null,
     periodText,
     purchaseStart,
     purchaseEnd,
