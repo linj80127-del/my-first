@@ -20,6 +20,14 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
     }
 
     const buffer = Buffer.from(await res.arrayBuffer());
+
+    // Some sites' declared charset (header or <meta>) doesn't match what they actually
+    // send (e.g. migrated to UTF-8 but left an old Shift_JIS meta tag in place), so the
+    // declared value can't be trusted blindly. Decode as UTF-8 first and only fall back
+    // to the declared/sniffed charset if that produced invalid sequences (U+FFFD).
+    const utf8Text = buffer.toString("utf-8");
+    if (!utf8Text.includes("�")) return utf8Text;
+
     const contentType = res.headers.get("content-type") ?? "";
     let charset = contentType.match(/charset=([^;]+)/i)?.[1];
     if (!charset) {
@@ -29,13 +37,12 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
       const head = buffer.subarray(0, 4096).toString("latin1");
       charset = head.match(/charset=["']?([\w-]+)/i)?.[1];
     }
-    charset = (charset ?? "utf-8").trim();
+    charset = (charset ?? "").trim();
 
-    // iconv-lite (not the platform TextDecoder, which needs full-icu for Shift_JIS/EUC-JP
-    // and silently mis-decodes without it) handles the legacy Japanese encodings many
-    // convenience-store and blog sites still serve.
-    if (!iconv.encodingExists(charset)) return buffer.toString("utf-8");
-    return iconv.decode(buffer, charset);
+    if (charset && iconv.encodingExists(charset)) {
+      return iconv.decode(buffer, charset);
+    }
+    return utf8Text;
   } finally {
     clearTimeout(timer);
   }
