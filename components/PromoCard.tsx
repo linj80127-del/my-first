@@ -49,17 +49,11 @@ export default function PromoCard({ promo }: { promo: Promo }) {
       </div>
 
       <div className="mt-4">
-        {sameItem ? (
-          <p className="text-base font-medium leading-snug text-stone-900 dark:text-stone-50">
-            {promo.buyItem}
-          </p>
-        ) : (
-          <p className="text-base font-medium leading-snug text-stone-900 dark:text-stone-50">
-            {promo.buyItem}
-            <span className="mx-1.5 text-stone-400">→</span>
-            {promo.getItem}
-          </p>
-        )}
+        <p className="text-base font-medium leading-snug text-stone-900 dark:text-stone-50">
+          {promo.buyItem}
+          <span className="mx-1.5 text-stone-400">→</span>
+          {sameItem ? "もう1つ無料" : promo.getItem}
+        </p>
       </div>
 
       <dl className="mt-4 space-y-1 border-t border-stone-100 pt-3 text-sm dark:border-stone-800">
