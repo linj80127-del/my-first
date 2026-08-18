@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import PromoCard from "@/components/PromoCard";
 import { STORE_LIST, STORES } from "@/lib/stores";
 import { PromosResponse, StoreId } from "@/lib/types";
+import { detectHighlight } from "@/lib/highlight";
 
 type FilterId = "all" | StoreId;
 
@@ -33,6 +34,9 @@ export default function Home() {
   const promos = (data?.results ?? [])
     .filter((r) => filter === "all" || r.store === filter)
     .flatMap((r) => r.promos);
+
+  const highlightedPromos = promos.filter((p) => detectHighlight(p) !== null);
+  const normalPromos = promos.filter((p) => detectHighlight(p) === null);
 
   const failedStores = (data?.results ?? []).filter((r) => !r.ok || r.promos.length === 0);
 
@@ -106,11 +110,35 @@ export default function Home() {
         )}
 
         {promos.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {promos.map((p) => (
-              <PromoCard key={p.id} promo={p} />
-            ))}
-          </div>
+          <>
+            {highlightedPromos.length > 0 && (
+              <div className="mb-6">
+                <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                  注目（プロテイン・無糖茶/水）
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {highlightedPromos.map((p) => (
+                    <PromoCard key={p.id} promo={p} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {normalPromos.length > 0 && (
+              <div>
+                {highlightedPromos.length > 0 && (
+                  <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                    その他の対象商品
+                  </h2>
+                )}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {normalPromos.map((p) => (
+                    <PromoCard key={p.id} promo={p} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           !loading && (
             <p className="text-zinc-500 dark:text-zinc-400">

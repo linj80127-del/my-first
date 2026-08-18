@@ -16,15 +16,45 @@ function splitBuyGet(text: string, fallbackName: string): { buyItem: string; get
   return { buyItem: fallbackName, getItem: fallbackName };
 }
 
-// Picks the first short, human-looking line out of a card's text to use as the product name,
-// stripping the price/period fragments we already parse separately.
+// Picks a short, human-looking chunk of text to use as the product name, stripping the
+// price/period fragments we already parse separately.
 function guessProductName(rawText: string, price: string | null, periodText: string | null): string {
   let t = rawText;
   if (price) t = t.replace(price, " ");
   if (periodText) t = t.replace(periodText, " ");
   t = cleanText(t);
-  // Truncate to something card-sized; long blocks are usually noise (nav/footer) that slipped through.
+  // Truncate to something card-sized; long blocks are usually noise that slipped through.
   return t.length > 40 ? `${t.slice(0, 40)}…` : t;
+}
+
+function buildPromo(
+  text: string,
+  store: StoreId,
+  url: string,
+  idx: number,
+  fallbackName?: string
+): Promo | null {
+  if (text.length < 4) return null;
+  const price = parsePrice(text);
+  const { periodText, periodStart, periodEnd } = parsePeriod(text);
+  // Skip obvious noise (nav/footer links, unrelated paragraphs) with neither a price nor a date range.
+  if (!price && !periodText) return null;
+
+  const productName = fallbackName ?? guessProductName(text, price, periodText);
+  if (!productName) return null;
+  const { buyItem, getItem } = splitBuyGet(text, productName);
+
+  return {
+    id: `${store}-${idx}-${buyItem}`.slice(0, 120),
+    store,
+    buyItem,
+    getItem,
+    price,
+    periodText,
+    periodStart,
+    periodEnd,
+    sourceUrl: url,
+  };
 }
 
 export interface GenericScrapeOptions {
@@ -35,6 +65,7 @@ export interface GenericScrapeOptions {
   maxItems?: number;
 }
 
+// Scrapes card/list-style pages (typical of the convenience store chains' own campaign pages).
 export async function genericCardScrape({
   url,
   store,
@@ -59,29 +90,59 @@ export async function genericCardScrape({
   cards.each((i, el) => {
     if (promos.length >= maxItems) return;
     const text = cleanText($(el).text());
-    if (text.length < 4) return;
     if (requireKeyword && !requireKeyword.test(text)) return;
+    const promo = buildPromo(text, store, url, i);
+    if (promo) promos.push(promo);
+  });
 
-    const price = parsePrice(text);
-    const { periodText, periodStart, periodEnd } = parsePeriod(text);
-    // Skip obvious noise (nav/footer links etc.) that has neither a price nor a date range.
-    if (!price && !periodText) return;
+  return dedupePromos(promos);
+}
 
-    const productName = guessProductName(text, price, periodText);
-    if (!productName) return;
-    const { buyItem, getItem } = splitBuyGet(text, productName);
+export interface HeadingBlockScrapeOptions {
+  url: string;
+  store: StoreId;
+  contentSelectors: string[];
+  headingSelector?: string;
+  maxItems?: number;
+}
 
-    promos.push({
-      id: `${store}-${i}-${buyItem}`.slice(0, 120),
-      store,
-      buyItem,
-      getItem,
-      price,
-      periodText,
-      periodStart,
-      periodEnd,
-      sourceUrl: url,
-    });
+// Scrapes "まとめ" blog articles: a content block (e.g. `.entry-content`) containing a
+// product name in each heading, followed by paragraph(s) with the price/period. Used as a
+// fallback when the chain's own site can't be parsed (structure change, blocking, etc.).
+export async function genericHeadingBlockScrape({
+  url,
+  store,
+  contentSelectors,
+  headingSelector = "h2, h3, h4",
+  maxItems = 40,
+}: HeadingBlockScrapeOptions): Promise<Promo[]> {
+  const html = await fetchHtml(url);
+  const $ = cheerio.load(html);
+
+  let root: cheerio.Cheerio<AnyNode> | null = null;
+  for (const selector of contentSelectors) {
+    const found = $(selector).first();
+    if (found.length && cleanText(found.text()).length > 100) {
+      root = found;
+      break;
+    }
+  }
+  if (!root) return [];
+
+  const headings = root.find(headingSelector).toArray();
+  const promos: Promo[] = [];
+
+  headings.forEach((h, i) => {
+    if (promos.length >= maxItems) return;
+    const $heading = $(h);
+    const headingText = cleanText($heading.text());
+    // Product name headings in these articles are short; long ones are usually section titles.
+    if (!headingText || headingText.length > 60) return;
+
+    const body = cleanText($heading.nextUntil(headingSelector).text());
+    const combined = cleanText(`${headingText} ${body}`);
+    const promo = buildPromo(combined, store, url, i, headingText);
+    if (promo) promos.push(promo);
   });
 
   return dedupePromos(promos);
