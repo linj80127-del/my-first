@@ -1,6 +1,17 @@
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
+// Normalizes the charset names sites declare (e.g. "Shift-JIS", "x-sjis") to a WHATWG
+// encoding label TextDecoder recognizes. Many older Japanese sites still serve Shift_JIS
+// or EUC-JP, and decoding those as UTF-8 (fetch's default via res.text()) silently mangles
+// every non-ASCII character instead of throwing, so this has to be checked explicitly.
+function normalizeCharset(charset: string): string {
+  const c = charset.trim().toLowerCase();
+  if (/^shift[-_]?jis$/.test(c) || c === "x-sjis" || c === "sjis") return "shift_jis";
+  if (/^euc[-_]?jp$/.test(c)) return "euc-jp";
+  return c;
+}
+
 export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -16,7 +27,23 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} ${res.statusText}`);
     }
-    return await res.text();
+
+    const buffer = await res.arrayBuffer();
+    const contentType = res.headers.get("content-type") ?? "";
+    let charset = contentType.match(/charset=([^;]+)/i)?.[1];
+    if (!charset) {
+      // Scan just the head for a <meta charset> declaration, decoded as latin1 so every
+      // byte maps 1:1 to a char code — safe for reading pure-ASCII markup regardless of
+      // the real encoding, without needing to know that encoding yet.
+      const head = Buffer.from(buffer.slice(0, 4096)).toString("latin1");
+      charset = head.match(/charset=["']?([\w-]+)/i)?.[1];
+    }
+
+    try {
+      return new TextDecoder(normalizeCharset(charset ?? "utf-8")).decode(buffer);
+    } catch {
+      return new TextDecoder("utf-8").decode(buffer);
+    }
   } finally {
     clearTimeout(timer);
   }
