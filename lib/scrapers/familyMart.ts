@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { Promo } from "../types";
 import { STORES } from "../stores";
 import { cleanText, dedupePromos, fetchHtml, parsePeriod } from "./util";
-import { genericHeadingBlockScrape, looksGarbled } from "./generic";
+import { looksGarbled } from "./generic";
 
 // Verified against the live page (2026-08-18): the whole page covers a single campaign
 // period (in `section.date`), with each product pair listed as `section.items ul.item_list
@@ -45,23 +45,10 @@ async function scrapeOfficial(url: string): Promise<Promo[]> {
   return dedupePromos(promos);
 }
 
-// Fallback source: a third-party deals blog that tracks this campaign, cross-checked against
-// several other independent outlets (see README) for accuracy and update frequency. Used only
-// when the official page can't be parsed.
-const BLOG_URL = "https://superprofitnews.main.jp/archives/20777";
-const BLOG_CONTENT_SELECTORS = [".entry-content", ".post-content", "article", "main"];
-
+// No third-party fallback: an unparsed page means no promos for this run rather than
+// mixing in less reliable data (a blog fallback previously showed mangled article-intro
+// text as if it were a product name when the official scrape failed on Vercel — see the
+// commit that removed it).
 export async function fetchPromos(): Promise<Promo[]> {
-  try {
-    const official = await scrapeOfficial(STORES["family-mart"].sourceUrl);
-    if (official.length > 0) return official;
-  } catch {
-    // fall through to the blog fallback below
-  }
-
-  return genericHeadingBlockScrape({
-    url: BLOG_URL,
-    store: "family-mart",
-    contentSelectors: BLOG_CONTENT_SELECTORS,
-  });
+  return scrapeOfficial(STORES["family-mart"].sourceUrl);
 }

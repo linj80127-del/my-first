@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { Promo } from "../types";
 import { STORES } from "../stores";
 import { cleanText, dedupePromos, fetchHtml, parsePeriod, parsePrice } from "./util";
-import { genericHeadingBlockScrape, looksGarbled } from "./generic";
+import { looksGarbled } from "./generic";
 
 // The "buy X, get Y free" listings each live on their own detail page linked from
 // STORES.lawson.sourceUrl (verified against the live site, 2026-08-18).
@@ -16,9 +16,9 @@ interface NamedItem {
 }
 
 // Multi-variant campaigns (e.g. "any of these 2 flavors") list every variant individually;
-// showing just the first plus "他" keeps the card readable, matching the convention already
-// used in lib/seedData.ts. Its price is shown alongside — the variants aren't always
-// same-priced, but this is the best single price a summarized name can honestly carry.
+// showing just the first plus "他" keeps the card readable. Its price is shown alongside —
+// the variants aren't always same-priced, but this is the best single price a summarized
+// name can honestly carry.
 function summarizeItems(items: NamedItem[]): NamedItem {
   if (items.length === 0) return { name: "", price: null };
   if (items.length === 1) return items[0];
@@ -136,23 +136,10 @@ async function scrapeOfficial(): Promise<Promo[]> {
   return dedupePromos(promos);
 }
 
-// Fallback source: a third-party deals blog that tracks this campaign, cross-checked against
-// several other independent outlets (see README) for accuracy and update frequency. Used only
-// when the official page can't be parsed.
-const BLOG_URL = "https://superprofitnews.main.jp/archives/19415";
-const BLOG_CONTENT_SELECTORS = [".entry-content", ".post-content", "article", "main"];
-
+// No third-party fallback: an unparsed page means no promos for this run rather than
+// mixing in less reliable data (a blog fallback previously showed mangled article-intro
+// text as if it were a product name when the official scrape failed on Vercel — see the
+// commit that removed it).
 export async function fetchPromos(): Promise<Promo[]> {
-  try {
-    const official = await scrapeOfficial();
-    if (official.length > 0) return official;
-  } catch {
-    // fall through to the blog fallback below
-  }
-
-  return genericHeadingBlockScrape({
-    url: BLOG_URL,
-    store: "lawson",
-    contentSelectors: BLOG_CONTENT_SELECTORS,
-  });
+  return scrapeOfficial();
 }
