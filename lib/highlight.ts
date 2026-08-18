@@ -33,8 +33,25 @@ const SWEETENED_TEA_KEYWORDS = [
   "微糖",
 ];
 
+// "茶" also shows up as a plain flavor descriptor on non-beverages (matcha ice cream,
+// hojicha pudding, etc.) — those aren't a tea/water drink at all, so exclude them even
+// though the sweetness rule above wouldn't catch them. "ロッテ 爽" specifically is Lotte's
+// ice cream line (its 抹茶/ほうじ茶 flavors got wrongly caught by the blanket "茶" match).
+const NON_BEVERAGE_KEYWORDS = [
+  "ロッテ 爽",
+  "アイス",
+  "シャーベット",
+  "ジェラート",
+  "かき氷",
+  "プリン",
+  "ゼリー",
+  "ケーキ",
+  "パフェ",
+];
+
 function isTeaOrWater(text: string): boolean {
   if (WATER_KEYWORDS.some((k) => text.includes(k))) return true;
+  if (NON_BEVERAGE_KEYWORDS.some((k) => text.includes(k))) return false;
   if (TEA_BRAND_KEYWORDS.some((k) => text.includes(k))) return true;
   if (!text.includes("茶")) return false;
   return !SWEETENED_TEA_KEYWORDS.some((k) => text.includes(k));

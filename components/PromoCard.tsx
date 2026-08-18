@@ -7,11 +7,16 @@ const HIGHLIGHT_LABEL: Record<string, string> = {
   "tea-water": "無糖茶・水",
 };
 
-// A small accent dot rather than a colored block — highlight stays legible without
-// competing with the product name for attention.
-const HIGHLIGHT_DOT: Record<string, string> = {
-  protein: "bg-red-700/80",
-  "tea-water": "bg-teal-700/80",
+// A colored left edge plus a tinted tag — visible at a glance while each category keeps
+// its own color, without falling back to a loud filled badge.
+const HIGHLIGHT_BORDER: Record<string, string> = {
+  protein: "border-l-4 border-l-amber-700 dark:border-l-amber-500",
+  "tea-water": "border-l-4 border-l-teal-700 dark:border-l-teal-500",
+};
+
+const HIGHLIGHT_TAG: Record<string, string> = {
+  protein: "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+  "tea-water": "bg-teal-50 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300",
 };
 
 export default function PromoCard({ promo }: { promo: Promo }) {
@@ -24,7 +29,9 @@ export default function PromoCard({ promo }: { promo: Promo }) {
       href={promo.sourceUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block border border-stone-200 bg-white p-5 transition-colors hover:border-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-600"
+      className={`group block border border-stone-200 bg-white p-5 transition-colors hover:border-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-600 ${
+        highlight ? HIGHLIGHT_BORDER[highlight] : ""
+      }`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs tracking-wide text-stone-500 dark:text-stone-400">
@@ -32,8 +39,9 @@ export default function PromoCard({ promo }: { promo: Promo }) {
           {meta.name}
         </span>
         {highlight && (
-          <span className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400">
-            <span className={`h-1.5 w-1.5 rounded-full ${HIGHLIGHT_DOT[highlight]}`} aria-hidden />
+          <span
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${HIGHLIGHT_TAG[highlight]}`}
+          >
             {HIGHLIGHT_LABEL[highlight]}
           </span>
         )}
