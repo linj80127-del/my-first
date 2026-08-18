@@ -2,9 +2,10 @@ import { Promo } from "./types";
 
 // Manually researched and cross-checked against multiple independent outlets (see README's
 // "情報源について" section) as a baseline, shown alongside whatever the live scraper finds.
-// The live scraper's own selectors are best-effort guesses at page structures we couldn't
-// verify directly, so this exists as insurance against a sparse or failed scrape rather
-// than as the primary source.
+// As of 2026-08-18 the live scrapers (lib/scrapers/sevenEleven.ts, lawson.ts,
+// familyMart.ts) parse the three chains' official sites directly, verified against their
+// real HTML structure — so this is now purely insurance against a sparse or failed scrape,
+// not the primary source.
 //
 // Only entries whose purchaseStart/purchaseEnd currently contains today are shown (see
 // lib/scrapers/index.ts's isCurrentlyPurchasable) — a promo whose purchase window has
@@ -24,19 +25,6 @@ export const SEED_PROMOS: Promo[] = [
     purchaseEnd: "2026-08-17",
     redeemStart: "2026-08-18",
     redeemEnd: "2026-08-31",
-    sourceUrl: "https://www.sej.co.jp/cmp/plaichi.html",
-  },
-  {
-    id: "seed-seven-eleven-solmac",
-    store: "seven-eleven",
-    buyItem: "ソルマック5 50ml／チオビタ・ドリンク 100ml",
-    getItem: "チオビタ・ドリンク 100ml",
-    price: null,
-    periodText: "購入期間 8/13(木)〜8/19(水) / 引換期間 8/20(木)〜9/2(水)",
-    purchaseStart: "2026-08-13",
-    purchaseEnd: "2026-08-19",
-    redeemStart: "2026-08-20",
-    redeemEnd: "2026-09-02",
     sourceUrl: "https://www.sej.co.jp/cmp/plaichi.html",
   },
   {
@@ -89,19 +77,6 @@ export const SEED_PROMOS: Promo[] = [
     purchaseEnd: "2026-08-17",
     redeemStart: "2026-08-18",
     redeemEnd: "2026-08-24",
-    sourceUrl: "https://www.lawson.co.jp/campaign/",
-  },
-  {
-    id: "seed-lawson-machikado-kinki",
-    store: "lawson",
-    buyItem: "まちかど厨房 弁当各種（近畿エリア限定）",
-    getItem: "アイリスのお茶 綠 500ml",
-    price: null,
-    periodText: "8/18(火)〜（近畿エリア限定）",
-    purchaseStart: "2026-08-18",
-    purchaseEnd: "2026-08-18",
-    redeemStart: null,
-    redeemEnd: null,
     sourceUrl: "https://www.lawson.co.jp/campaign/",
   },
   {
