@@ -23,13 +23,12 @@ const HIGHLIGHT_TAG: Record<string, string> = {
 // A fixed height (not just a minimum) plus line-clamp keeps every card's item boxes the
 // same size across the whole grid, regardless of how long a given product name is —
 // overflowing names truncate with an ellipsis instead of growing the box.
-function ItemBox({ name, price }: { name: string; price: string | null }) {
+function ItemBox({ name }: { name: string }) {
   return (
-    <div className="flex h-28 flex-1 flex-col justify-between overflow-hidden border border-stone-200 p-2.5 dark:border-stone-700">
+    <div className="flex h-16 flex-1 items-center overflow-hidden border border-stone-200 p-2.5 dark:border-stone-700">
       <p className="line-clamp-3 text-xs leading-snug text-stone-800 dark:text-stone-100">
         {name}
       </p>
-      <p className="text-xs font-medium text-stone-500 dark:text-stone-400">{price ?? " "}</p>
     </div>
   );
 }
@@ -62,11 +61,11 @@ export default function PromoCard({ promo }: { promo: Promo }) {
       </div>
 
       <div className="mt-4 flex items-stretch gap-2">
-        <ItemBox name={promo.buyItem} price={promo.buyPrice} />
+        <ItemBox name={promo.buyItem} />
         <div className="flex w-5 shrink-0 items-center justify-center text-stone-400" aria-hidden>
           →
         </div>
-        <ItemBox name={promo.getItem} price={promo.getPrice} />
+        <ItemBox name={promo.getItem} />
       </div>
 
       <dl className="mt-4 space-y-1 border-t border-stone-100 pt-3 text-sm dark:border-stone-800">
