@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+/* A warm, paper-like neutral palette (kraft/charcoal rather than pure white/black) —
+   the muted, low-saturation look this app's UI is styled after. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f5f0;
+  --foreground: #2b2926;
 }
 
 @theme inline {
@@ -12,8 +14,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1c1b18;
+    --foreground: #ece9e2;
   }
 }
 

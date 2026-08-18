@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "セブン-イレブン・ローソン・ファミリーマートの「1個買うと1個もらえる」等のキャンペーン情報まとめ",
     start_url: "/",
     display: "standalone",
-    background_color: "#fafafa",
-    theme_color: "#ea580c",
+    background_color: "#f7f5f0",
+    theme_color: "#2b2926",
     lang: "ja",
     icons: [
       { src: "/icon-192", sizes: "192x192", type: "image/png" },
