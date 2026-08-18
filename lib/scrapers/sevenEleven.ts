@@ -3,7 +3,7 @@ import type { AnyNode } from "domhandler";
 import { Promo } from "../types";
 import { STORES } from "../stores";
 import { cleanText, dedupePromos, fetchHtml, parsePeriod } from "./util";
-import { genericHeadingBlockScrape, looksGarbled } from "./generic";
+import { looksGarbled } from "./generic";
 
 // Verified against the live page (2026-08-18): each campaign is a `.plaichi_box` card with
 // a `dl` of 発券期間/引換期間 dates and two item lists — `.ticketing_item` (購入対象商品,
@@ -20,8 +20,7 @@ function itemNames($: cheerio.CheerioAPI, card: cheerio.Cheerio<AnyNode>, kindCl
 }
 
 // Multi-variant campaigns (e.g. "any of these 4 yogurt flavors") list every variant
-// individually; showing just the first plus "他" keeps the card readable, matching the
-// convention already used in lib/seedData.ts.
+// individually; showing just the first plus "他" keeps the card readable.
 function summarizeNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? "";
   return `${names[0]} 他`;
@@ -65,23 +64,10 @@ async function scrapeOfficial(url: string): Promise<Promo[]> {
   return dedupePromos(promos);
 }
 
-// Fallback source: a third-party deals blog that tracks this campaign, cross-checked against
-// several other independent outlets (see README) for accuracy and update frequency. Used only
-// when the official page can't be parsed.
-const BLOG_URL = "https://superprofitnews.main.jp/archives/12839";
-const BLOG_CONTENT_SELECTORS = [".entry-content", ".post-content", "article", "main"];
-
+// No third-party fallback: an unparsed page means no promos for this run rather than
+// mixing in less reliable data (a blog fallback previously showed mangled article-intro
+// text as if it were a product name when the official scrape failed on Vercel — see the
+// commit that removed it).
 export async function fetchPromos(): Promise<Promo[]> {
-  try {
-    const official = await scrapeOfficial(STORES["seven-eleven"].sourceUrl);
-    if (official.length > 0) return official;
-  } catch {
-    // fall through to the blog fallback below
-  }
-
-  return genericHeadingBlockScrape({
-    url: BLOG_URL,
-    store: "seven-eleven",
-    contentSelectors: BLOG_CONTENT_SELECTORS,
-  });
+  return scrapeOfficial(STORES["seven-eleven"].sourceUrl);
 }

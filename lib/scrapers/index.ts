@@ -1,5 +1,4 @@
 import { Promo, StoreId, StoreResult } from "../types";
-import { SEED_PROMOS } from "../seedData";
 import * as sevenEleven from "./sevenEleven";
 import * as lawson from "./lawson";
 import * as familyMart from "./familyMart";
@@ -22,12 +21,6 @@ function isCurrentlyPurchasable(promo: Promo): boolean {
   return true;
 }
 
-// Seed entries are a manually researched baseline (see lib/seedData.ts), not the live
-// source.
-function seedPromosFor(store: StoreId): Promo[] {
-  return SEED_PROMOS.filter((p) => p.store === store);
-}
-
 function dedupeByProduct(promos: Promo[]): Promo[] {
   const seen = new Set<string>();
   const out: Promo[] = [];
@@ -46,22 +39,22 @@ export async function fetchAllStores(): Promise<StoreResult[]> {
   return Promise.all(
     entries.map(async ([store, fetchFn]) => {
       const fetchedAt = new Date().toISOString();
-      const seedPromos = seedPromosFor(store).filter(isCurrentlyPurchasable);
       try {
         const livePromos = (await fetchFn()).filter(isCurrentlyPurchasable);
         return {
           store,
           ok: true,
-          promos: dedupeByProduct([...livePromos, ...seedPromos]),
+          promos: dedupeByProduct(livePromos),
           error: null,
           fetchedAt,
         } as StoreResult;
       } catch (err) {
-        // A live-fetch failure still isn't a dead end as long as the seed baseline covers it.
+        // No fallback data source — an honest "couldn't fetch this" beats silently mixing
+        // in a third-party baseline that can drift stale or, worse, be mis-scraped itself.
         return {
           store,
-          ok: seedPromos.length > 0,
-          promos: seedPromos,
+          ok: false,
+          promos: [],
           error: err instanceof Error ? err.message : String(err),
           fetchedAt,
         } as StoreResult;
