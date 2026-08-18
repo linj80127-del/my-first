@@ -11,7 +11,13 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
     const res = await fetch(url, {
       headers: {
         "User-Agent": UA,
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "ja,en;q=0.8",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
       },
       signal: controller.signal,
       cache: "no-store",
@@ -29,10 +35,20 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
     // content from UTF-8 content that merely LOOKS like valid UTF-8 by chance.
     const { encoding, confidence } = jschardet.detect(buffer);
     const detected = (encoding ?? "utf-8").toLowerCase();
-    if (confidence > 0.5 && detected !== "utf-8" && detected !== "ascii" && iconv.encodingExists(detected)) {
-      return iconv.decode(buffer, detected);
+    const html =
+      confidence > 0.5 && detected !== "utf-8" && detected !== "ascii" && iconv.encodingExists(detected)
+        ? iconv.decode(buffer, detected)
+        : buffer.toString("utf-8");
+
+    // A real campaign page is tens of KB; some sites' bot protection returns a "successful"
+    // (HTTP 200) but near-empty response to requests it doesn't like, rather than an
+    // honest error status — that must not be mistaken for "the page loaded but has no
+    // promos right now" (an empty scrape result reads as a real state, not a fetch failure).
+    if (html.trim().length < 1000) {
+      throw new Error(`Response too short to be a real page (${html.trim().length} bytes) — possibly blocked`);
     }
-    return buffer.toString("utf-8");
+
+    return html;
   } finally {
     clearTimeout(timer);
   }
