@@ -1,6 +1,7 @@
 import { Promo } from "@/lib/types";
 import { STORES } from "@/lib/stores";
 import { detectHighlight } from "@/lib/highlight";
+import { formatPurchasePeriod } from "@/lib/format";
 
 const HIGHLIGHT_LABEL: Record<string, string> = {
   protein: "プロテイン",
@@ -67,15 +68,13 @@ export default function PromoCard({ promo }: { promo: Promo }) {
       <dl className="mt-4 space-y-1 border-t border-stone-100 pt-3 text-sm dark:border-stone-800">
         {promo.price && (
           <div className="flex gap-3">
-            <dt className="w-10 shrink-0 text-stone-400">価格</dt>
+            <dt className="w-16 shrink-0 text-stone-400">価格</dt>
             <dd className="text-stone-600 dark:text-stone-300">{promo.price}</dd>
           </div>
         )}
         <div className="flex gap-3">
-          <dt className="w-10 shrink-0 text-stone-400">期間</dt>
-          <dd className="text-stone-600 dark:text-stone-300">
-            {promo.periodText ?? "公式サイトで確認"}
-          </dd>
+          <dt className="w-16 shrink-0 text-stone-400">発券期間</dt>
+          <dd className="text-stone-600 dark:text-stone-300">{formatPurchasePeriod(promo)}</dd>
         </div>
       </dl>
     </a>

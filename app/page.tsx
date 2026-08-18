@@ -71,8 +71,8 @@ export default function Home() {
         </div>
       </header>
 
-      <nav className="mx-auto max-w-4xl border-b border-stone-200 px-5 sm:px-6 dark:border-stone-800">
-        <div className="flex flex-wrap gap-6">
+      <nav className="mx-auto max-w-4xl overflow-x-auto border-b border-stone-200 px-4 sm:px-6 dark:border-stone-800">
+        <div className="flex flex-nowrap gap-3 whitespace-nowrap">
           <FilterTab label="すべて" active={filter === "all"} onClick={() => setFilter("all")} />
           {STORE_LIST.map((s) => (
             <FilterTab
