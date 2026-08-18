@@ -4,7 +4,7 @@ import jschardet from "jschardet";
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string> {
+async function fetchHtmlOnce(url: string, timeoutMs: number): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -51,6 +51,20 @@ export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string>
     return html;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// One retry after a short pause: a bot-check challenge page has shown up intermittently
+// (not on every single request from the same client), so a single immediate failure isn't
+// necessarily a real outage — worth trying again once before reporting a failure to the user.
+export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string> {
+  try {
+    return await fetchHtmlOnce(url, timeoutMs);
+  } catch {
+    await sleep(750);
+    return fetchHtmlOnce(url, timeoutMs);
   }
 }
 
