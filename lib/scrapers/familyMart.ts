@@ -31,7 +31,8 @@ async function scrapeOfficial(url: string): Promise<Promo[]> {
       store: "family-mart",
       buyItem,
       getItem,
-      price: null,
+      buyPrice: null, // not stated on the official page
+      getPrice: null,
       periodText,
       purchaseStart,
       purchaseEnd,
